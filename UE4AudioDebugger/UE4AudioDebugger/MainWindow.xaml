@@ -4,7 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="MainWindow">
+        Title="MainWindow"
+        Loaded="Window_Loaded">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="75*"/>
@@ -15,12 +16,24 @@
             <RowDefinition Height="3*"/>
         </Grid.RowDefinitions>
 
+        <!-- Canvas -->
         <Border Background="Silver" Grid.Row="0" Grid.Column="0">
             <Canvas Name="canvas"/>
         </Border>
 
+        <!-- Explorer -->
         <Border Background="LightSlateGray" Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"></Border>
 
-        <Border Background="SlateGray" Grid.Row="1" Grid.Column="0"></Border>
+        <!-- Output window -->
+        <Border Background="SlateGray" Grid.Row="1" Grid.Column="0">
+            <RichTextBox Name="outputWindow" IsReadOnly="True" FontFamily="Courier New" VerticalScrollBarVisibility="Visible">
+                <RichTextBox.Resources>
+                    <Style TargetType="{x:Type Paragraph}">
+                        <!-- To remove extra line break for each line -->
+                        <Setter Property="Margin" Value="0"/>
+                    </Style>
+                </RichTextBox.Resources>
+            </RichTextBox>
+        </Border>
     </Grid>
 </Window>

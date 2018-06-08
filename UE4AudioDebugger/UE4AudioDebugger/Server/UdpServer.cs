@@ -2,8 +2,6 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading;
 
 namespace UE4AudioDebugger.Server
 {
@@ -11,7 +9,11 @@ namespace UE4AudioDebugger.Server
     {
         private IPEndPoint _listeningEndPoint;
         private UdpClient _udpClient;
-        private ConcurrentQueue<byte[]> _receivedPacketQueue = new ConcurrentQueue<byte[]>();
+
+        /// <summary>
+        /// Concurrent queue where incoming message are stored for consumption by a worker thread.
+        /// </summary>
+        public ConcurrentQueue<Message> MessageQueue = new ConcurrentQueue<Message>();
 
         public UdpServer(int serverPort)
         {
@@ -19,32 +21,23 @@ namespace UE4AudioDebugger.Server
            _udpClient = new UdpClient(_listeningEndPoint);
         }
 
+        /// <summary>
+        /// Start listening for incoming messages.
+        /// </summary>
         public void Start()
         {
             _udpClient.BeginReceive(OnReceivedUdpMessage, _udpClient);
-        }
-
-        public void ProcessQueue()
-        {
-            while (true)
-            {
-                var hasMessage = _receivedPacketQueue.TryDequeue(out byte[] message);
-                if (!hasMessage)
-                {
-                    Thread.Sleep(1000);
-                    continue;
-                }
-
-                var data = Encoding.ASCII.GetString(message).TrimEnd('\0').Substring(4); // Substring to workaround UE4 "Writer << message" issue
-                Console.WriteLine(data);
-            }
         }
 
         private void OnReceivedUdpMessage(IAsyncResult result)
         {
             var socket = result.AsyncState as UdpClient;
             var message = socket.EndReceive(result, ref _listeningEndPoint);
-            _receivedPacketQueue.Enqueue(message);
+            MessageQueue.Enqueue(new Message
+            {
+                Timestamp = DateTime.Now,
+                MessageBytes = message,
+            });
             socket.BeginReceive(OnReceivedUdpMessage, socket);
         }
     }
