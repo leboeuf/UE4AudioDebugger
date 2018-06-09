@@ -53,6 +53,9 @@
     <ApplicationDefinition Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
     </ApplicationDefinition>
+    <Compile Include="Models\Location.cs" />
+    <Compile Include="Models\UActor.cs" />
+    <Compile Include="Models\World.cs" />
     <Compile Include="Server\Message.cs" />
     <Compile Include="Server\UdpServer.cs" />
     <Page Include="MainWindow.xaml">

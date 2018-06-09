@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using UE4AudioDebugger.Models;
 using UE4AudioDebugger.Server;
 
 namespace UE4AudioDebugger
@@ -14,9 +16,14 @@ namespace UE4AudioDebugger
     public partial class MainWindow : Window
     {
         const int PORT = 8089;
+        const int NB_UI_REFRESHES_PER_SECOND = 5;
         const string OUTPUT_WINDOW_DATETIME_FORMAT = "hh:mm:ss.fff";
         private UdpServer _udpServer;
         private CancellationTokenSource _processMessageQueueCancellationTokenSource = new CancellationTokenSource();
+        private CancellationTokenSource _UiRefreshLoopCancellationTokenSource = new CancellationTokenSource();
+
+        private List<UActor> _actors = new List<UActor>();
+        private StringBuilder _outputWindowBuffer = new StringBuilder();
 
         public MainWindow()
         {
@@ -39,6 +46,10 @@ namespace UE4AudioDebugger
             // Start processing messages
             var ct = _processMessageQueueCancellationTokenSource.Token;
             Task.Run(() => ProcessMessageQueue(ct), ct);
+
+            // Start refreshing UI
+            var ct2 = _UiRefreshLoopCancellationTokenSource.Token;
+            Task.Run(() => UiRefreshLoop(ct2), ct2);
         }
 
         private void ProcessMessageQueue(CancellationToken ct)
@@ -53,7 +64,40 @@ namespace UE4AudioDebugger
                 }
 
                 var data = Encoding.ASCII.GetString(message.MessageBytes).TrimEnd('\0').Substring(4); // Substring to workaround UE4 "Writer << message" issue
-                Dispatcher.Invoke(() => WriteToOutputWindow($"\n{message.Timestamp.ToString(OUTPUT_WINDOW_DATETIME_FORMAT)}: {data}"), DispatcherPriority.Background);
+                lock (_outputWindowBuffer)
+                {
+                    _outputWindowBuffer.Append($"\n{message.Timestamp.ToString(OUTPUT_WINDOW_DATETIME_FORMAT)}: {data}");
+                }
+
+                // Parse message
+                var split = data.Split('=');
+                if (split.Length < 3) continue;
+                var name = split[0].Substring(0, split[0].Length - 1);
+                var x = Convert.ToDecimal(split[1].Substring(0, split[1].IndexOf(' ')));
+                var y = Convert.ToDecimal(split[2].Substring(0, split[2].IndexOf(' ')));
+                var z = Convert.ToDecimal(split[3]);
+
+                var actor = new UActor
+                {
+                    Name = name,
+                    Location = new Location { X = x, Y = y, Z = z },
+                };
+
+                _actors.Add(actor);
+            }
+        }
+
+        private void UiRefreshLoop(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                Thread.Sleep(1000 / NB_UI_REFRESHES_PER_SECOND);
+
+                lock (_outputWindowBuffer)
+                {
+                    Dispatcher.Invoke(() => WriteToOutputWindow(_outputWindowBuffer.ToString()), DispatcherPriority.Background);
+                    _outputWindowBuffer.Clear();
+                }
             }
         }
     }
