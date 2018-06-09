@@ -36,6 +36,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -53,9 +54,9 @@
     <ApplicationDefinition Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
     </ApplicationDefinition>
+    <Compile Include="Drawing\Canvas.cs" />
     <Compile Include="Models\Location.cs" />
     <Compile Include="Models\UActor.cs" />
-    <Compile Include="Models\World.cs" />
     <Compile Include="Server\Message.cs" />
     <Compile Include="Server\UdpServer.cs" />
     <Page Include="MainWindow.xaml">

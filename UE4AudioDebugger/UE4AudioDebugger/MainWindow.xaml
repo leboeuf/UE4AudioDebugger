@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d"
+        xmlns:localDrawing="clr-namespace:UE4AudioDebugger.Drawing"
         Title="MainWindow"
         Loaded="Window_Loaded">
     <Grid>
@@ -18,11 +18,13 @@
 
         <!-- Canvas -->
         <Border Background="Silver" Grid.Row="0" Grid.Column="0">
-            <Canvas Name="canvas"/>
+            <localDrawing:Canvas x:Name="canvas"/>
         </Border>
 
         <!-- Explorer -->
-        <Border Background="LightSlateGray" Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"></Border>
+        <Border Background="LightSlateGray" Grid.Row="0" Grid.Column="1" Grid.RowSpan="2">
+            <ListView Name="listView" Background="LightSlateGray"/>
+        </Border>
 
         <!-- Output window -->
         <Border Background="SlateGray" Grid.Row="1" Grid.Column="0">

@@ -54,51 +54,61 @@ namespace UE4AudioDebugger
 
         private void ProcessMessageQueue(CancellationToken ct)
         {
-            while (!ct.IsCancellationRequested)
+            try
             {
-                var hasMessage = _udpServer.MessageQueue.TryDequeue(out Message message);
-                if (!hasMessage)
+                while (!ct.IsCancellationRequested)
                 {
-                    Thread.Sleep(1000);
-                    continue;
+                    var hasMessage = _udpServer.MessageQueue.TryDequeue(out Message message);
+                    if (!hasMessage)
+                    {
+                        Thread.Sleep(1000);
+                        continue;
+                    }
+
+                    var data = Encoding.ASCII.GetString(message.MessageBytes).TrimEnd('\0').Substring(4); // Substring to workaround UE4 "Writer << message" issue
+                    lock (_outputWindowBuffer)
+                    {
+                        _outputWindowBuffer.Append($"\n{message.Timestamp.ToString(OUTPUT_WINDOW_DATETIME_FORMAT)}: {data}");
+                    }
+
+                    // Parse message
+                    var split = data.Split('=');
+                    if (split.Length < 3) continue;
+                    var name = split[0].Substring(0, split[0].Length - 1);
+                    var x = Convert.ToDecimal(split[1].Substring(0, split[1].IndexOf(' ')));
+                    var y = Convert.ToDecimal(split[2].Substring(0, split[2].IndexOf(' ')));
+                    var z = Convert.ToDecimal(split[3]);
+
+                    var actor = new UActor
+                    {
+                        Name = name,
+                        Location = new Location { X = x, Y = y, Z = z },
+                    };
+
+                    _actors.Add(actor);
                 }
-
-                var data = Encoding.ASCII.GetString(message.MessageBytes).TrimEnd('\0').Substring(4); // Substring to workaround UE4 "Writer << message" issue
-                lock (_outputWindowBuffer)
-                {
-                    _outputWindowBuffer.Append($"\n{message.Timestamp.ToString(OUTPUT_WINDOW_DATETIME_FORMAT)}: {data}");
-                }
-
-                // Parse message
-                var split = data.Split('=');
-                if (split.Length < 3) continue;
-                var name = split[0].Substring(0, split[0].Length - 1);
-                var x = Convert.ToDecimal(split[1].Substring(0, split[1].IndexOf(' ')));
-                var y = Convert.ToDecimal(split[2].Substring(0, split[2].IndexOf(' ')));
-                var z = Convert.ToDecimal(split[3]);
-
-                var actor = new UActor
-                {
-                    Name = name,
-                    Location = new Location { X = x, Y = y, Z = z },
-                };
-
-                _actors.Add(actor);
             }
+            catch (OperationCanceledException) { }
         }
 
         private void UiRefreshLoop(CancellationToken ct)
         {
-            while (!ct.IsCancellationRequested)
+            try
             {
-                Thread.Sleep(1000 / NB_UI_REFRESHES_PER_SECOND);
-
-                lock (_outputWindowBuffer)
+                while (!ct.IsCancellationRequested)
                 {
-                    Dispatcher.Invoke(() => WriteToOutputWindow(_outputWindowBuffer.ToString()), DispatcherPriority.Background);
-                    _outputWindowBuffer.Clear();
+                    Thread.Sleep(1000 / NB_UI_REFRESHES_PER_SECOND);
+
+                    lock (_outputWindowBuffer)
+                    {
+                        Dispatcher.Invoke(() => WriteToOutputWindow(_outputWindowBuffer.ToString()), DispatcherPriority.Background);
+                        _outputWindowBuffer.Clear();
+                    }
+
+                    Dispatcher.Invoke(() => canvas.InvalidateVisual(), DispatcherPriority.Render);
                 }
             }
+            catch (OperationCanceledException) { }
         }
     }
 }
