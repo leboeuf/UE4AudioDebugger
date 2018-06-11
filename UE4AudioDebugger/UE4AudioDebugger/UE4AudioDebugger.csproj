@@ -55,7 +55,7 @@
       <Generator>MSBuild:Compile</Generator>
     </ApplicationDefinition>
     <Compile Include="Drawing\Canvas.cs" />
-    <Compile Include="Models\Location.cs" />
+    <Compile Include="Models\Vector3.cs" />
     <Compile Include="Models\UActor.cs" />
     <Compile Include="Server\Message.cs" />
     <Compile Include="Server\UdpServer.cs" />

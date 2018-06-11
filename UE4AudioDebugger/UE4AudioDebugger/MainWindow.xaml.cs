@@ -73,17 +73,28 @@ namespace UE4AudioDebugger
                     }
 
                     // Parse message
-                    var split = data.Split('=');
-                    if (split.Length < 3) continue;
-                    var name = split[0].Substring(0, split[0].Length - 1);
-                    var x = Convert.ToDecimal(split[1].Substring(0, split[1].IndexOf(' ')));
-                    var y = Convert.ToDecimal(split[2].Substring(0, split[2].IndexOf(' ')));
-                    var z = Convert.ToDecimal(split[3]);
+                    var split = data.Split(';');
+                    if (split.Length < 4) continue;
+                    var name = split[0];//.Substring(0, split[0].Length - 1);
+                    var location = split[1].Split(' ');
+                    var x = Convert.ToDecimal(location[0].Split('=')[1]);
+                    var y = Convert.ToDecimal(location[1].Split('=')[1]);
+                    var z = Convert.ToDecimal(location[2].Split('=')[1]);
+                    var origin = split[2].Split(' ');
+                    var originX = Convert.ToDecimal(origin[0].Split('=')[1]);
+                    var originY = Convert.ToDecimal(origin[1].Split('=')[1]);
+                    var originZ = Convert.ToDecimal(origin[2].Split('=')[1]);
+                    var boxExtent = split[3].Split(' ');
+                    var boxExtentX = Convert.ToDecimal(boxExtent[0].Split('=')[1]);
+                    var boxExtentY = Convert.ToDecimal(boxExtent[1].Split('=')[1]);
+                    var boxExtentZ = Convert.ToDecimal(boxExtent[2].Split('=')[1]);
 
                     var actor = new UActor
                     {
                         Name = name,
-                        Location = new Location { X = x, Y = y, Z = z },
+                        Location = new Vector3 { X = x, Y = y, Z = z },
+                        Size = new Vector3 { X = boxExtentX, Y = boxExtentY, Z = boxExtentZ },
+                        Origin = new Vector3 { X = originX, Y = originY, Z = originZ },
                     };
 
                     _actors.Add(actor);
@@ -106,7 +117,7 @@ namespace UE4AudioDebugger
                         _outputWindowBuffer.Clear();
                     }
 
-                    Dispatcher.Invoke(() => { canvas.Points = _actors.Select(a => new System.Drawing.Point((int)a.Location.X, (int)a.Location.Y)).ToArray(); canvas.InvalidateVisual(); }, DispatcherPriority.Render);
+                    Dispatcher.Invoke(() => { canvas.Actors = _actors; canvas.InvalidateVisual(); }, DispatcherPriority.Render);
                 }
             }
             catch (OperationCanceledException) { }

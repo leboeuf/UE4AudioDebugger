@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
+using UE4AudioDebugger.Models;
 
 namespace UE4AudioDebugger.Drawing
 {
@@ -14,25 +16,28 @@ namespace UE4AudioDebugger.Drawing
         private static extern bool DeleteObject(IntPtr hObject);
 
         private readonly Pen _pen = new Pen(Color.Blue, 1);
-        private int _minX;
-        private int _maxX;
-        private int _minY;
-        private int _maxY;
+        private decimal _minX;
+        private decimal _maxX;
+        private decimal _minY;
+        private decimal _maxY;
 
-        public System.Drawing.Point[] Points { get; set; }
+        public List<UActor> Actors { get; set; }
+        public Pen ActorPen { get; set; }
 
         public bool IsGridVisible { get; set; } = true;
         public Pen GridPen { get; set; }
 
         public Canvas()
         {
+            ActorPen = new Pen(Color.Blue, 1);
+
             GridPen = new Pen(Color.DimGray, 1);
             GridPen.DashPattern = new[] { 5f, 3f };
         }
 
         protected override void OnRender(System.Windows.Media.DrawingContext dc)
         {
-            if (ActualWidth <= 0 || ActualHeight <= 0 || Points == null || Points.Count() < 1)
+            if (ActualWidth <= 0 || ActualHeight <= 0 || Actors == null || Actors.Count() < 1)
             {
                 return;
             }
@@ -64,17 +69,17 @@ namespace UE4AudioDebugger.Drawing
         {
             g.SmoothingMode = SmoothingMode.HighSpeed;
 
-            foreach (var point in Points)
+            foreach (var actor in Actors)
             {
-                if (point.X < _minX)
-                    _minX = point.X;
-                else if (point.X > _maxX)
-                    _maxX = point.X;
+                if (actor.Location.X < _minX)
+                    _minX = actor.Location.X;
+                else if (actor.Location.X > _maxX)
+                    _maxX = actor.Location.X;
 
-                if (point.Y < _minY)
-                    _minY = point.Y;
-                else if (point.Y > _maxY)
-                    _maxY = point.Y;
+                if (actor.Location.Y < _minY)
+                    _minY = actor.Location.Y;
+                else if (actor.Location.Y > _maxY)
+                    _maxY = actor.Location.Y;
             }
 
             // Make symmetrical
@@ -104,9 +109,10 @@ namespace UE4AudioDebugger.Drawing
             g.ScaleTransform(0.05f, 0.05f);
 
             // Draw points
-            foreach (var point in Points)
+            foreach (var actor in Actors)
             {
-                g.FillEllipse(Brushes.Blue, (int)point.X, (int)point.Y, 50, 50);
+                //g.FillEllipse(Brushes.Blue, (int)actor.Location.X, (int)actor.Location.Y, 50, 50);
+                g.DrawRectangle(ActorPen, (int)actor.Location.X, (int)actor.Location.Y, (int)actor.Size.X, (int)actor.Size.Y);
             }
         }
 
