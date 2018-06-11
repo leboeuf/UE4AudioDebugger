@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -105,7 +106,7 @@ namespace UE4AudioDebugger
                         _outputWindowBuffer.Clear();
                     }
 
-                    Dispatcher.Invoke(() => canvas.InvalidateVisual(), DispatcherPriority.Render);
+                    Dispatcher.Invoke(() => { canvas.Points = _actors.Select(a => new System.Drawing.Point((int)a.Location.X, (int)a.Location.Y)).ToArray(); canvas.InvalidateVisual(); }, DispatcherPriority.Render);
                 }
             }
             catch (OperationCanceledException) { }
